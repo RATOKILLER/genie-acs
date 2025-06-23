@@ -1,0 +1,92 @@
+/* ==== Isolamento absoluto: tudo dentro de .tech-dashboard ==== */
+.tech-dashboard .dashboard-container {
+  width: auto;
+  margin: 20px auto;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  zoom: 0.9; /* cabe melhor em telas de celular */
+}
+
+.tech-dashboard .dashboard-title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #003366;
+}
+
+.tech-dashboard .controls-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.tech-dashboard .search-box {
+  flex: 1;
+  max-width: 400px;
+  min-width: 200px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* responsiva para tabela */
+.tech-dashboard .table-responsive {
+  overflow-x: auto;
+}
+
+/* tabela padrão */
+.tech-dashboard .dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tech-dashboard .dashboard-table thead tr {
+  background-color: #003366;
+  color: #ffffff;
+}
+
+.tech-dashboard .dashboard-table th,
+.tech-dashboard .dashboard-table td {
+  padding: 8px;
+  border: 1px solid #eaeaea;
+  text-align: left;
+}
+
+.tech-dashboard .dashboard-table tbody tr:nth-child(odd) {
+  background-color: #e6ffe6;
+}
+
+.tech-dashboard .dashboard-table tbody tr:nth-child(even) {
+  background-color: #f0fff0;
+}
+
+/* botões de detalhe */
+.tech-dashboard .device-config-button {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  align-items: center;
+}
+
+/* ajustes para celular */
+@media (max-width: 480px) {
+  .tech-dashboard .dashboard-container {
+    padding: 10px;
+  }
+  .tech-dashboard .search-box {
+    width: 100%;
+    font-size: 0.9rem;
+  }
+  .tech-dashboard .dashboard-table th,
+  .tech-dashboard .dashboard-table td {
+    padding: 6px;
+    font-size: 0.8rem;
+  }
+  .tech-dashboard .device-config-button {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 4px;
+  }
+}

@@ -1,0 +1,99 @@
+/* src/AdminReports.css */
+
+/* Container mais estreito e centralizado */
+.settings-container {
+  padding: 40px 20px;
+  max-width: 900px;
+  margin: 40px auto;
+}
+
+/* Resumo */
+.report-summary {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+/* Controles de filtro centralizados */
+.filter-controls {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.filter-controls label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+.filter-controls select,
+.filter-controls input {
+  margin-top: 4px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 180px;
+}
+
+/* Tabela centralizada e ocupando toda largura disponível */
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 auto 20px;
+}
+.dashboard-table th,
+.dashboard-table td {
+  padding: 10px;
+  text-align: center;
+}
+.dashboard-table th {
+  background-color: #003366;
+  color: #ffffff;
+}
+
+/* Todas as linhas com fundo verde claro */
+.dashboard-table tbody tr td {
+  background-color: #e6ffe6;
+}
+
+/* Status em vermelho só quando falha (última coluna) */
+.dashboard-table tbody tr.row-failure td:last-child {
+  color: #dc3545 !important;
+}
+
+/* Se quiser deixar “Sucesso” em verde também */
+.dashboard-table tbody tr.row-success td:last-child {
+  color: #28a745;
+}
+
+/* Remove qualquer cor de fundo extra de linhas de falha */
+.row-failure td {
+  background-color: #e6ffe6;
+}
+
+
+/* ------------------------------------------------------------------
+   Botões menores na tabela de relatórios
+------------------------------------------------------------------ */
+.settings-container .dashboard-table .device-config-button {
+  padding: 4px 8px;
+  font-size: 0.85rem;
+}
+
+/* ------------------------------------------------------------------
+   Restore cores: texto de “Sucesso” em verde e “Falha” em vermelho
+------------------------------------------------------------------ */
+/* Coluna Status é a 4ª coluna (index 3) */
+.settings-container .dashboard-table tr.row-success td:nth-child(4) {
+  color: green;
+  font-weight: normal;
+}
+
+.settings-container .dashboard-table tr.row-failure td:nth-child(4) {
+  color: red;
+  font-weight: normal;
+}
+

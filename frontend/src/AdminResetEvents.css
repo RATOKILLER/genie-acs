@@ -1,0 +1,63 @@
+/* src/AdminResetEvents.css */
+
+/* Wrapper que permite scroll apenas se realmente necessário */
+.reset-events-wrapper {
+  overflow-x: visible; /* permite que a tabela cresça */
+  padding: 16px;
+}
+
+/* Tabela ocupa toda a largura e usa layout automático */
+.reset-events-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;   /* agora as colunas têm largura dinâmica */
+  background: #e6ffe6;
+  font-size: 16px;
+  white-space: nowrap;  /* evita quebra de linha nos dados */
+}
+
+/* Colunas flexíveis (ajuste ou remova se quiser auto) */
+.reset-events-table col:nth-child(1) { width: 20%; }  /* data/hora */
+.reset-events-table col:nth-child(2) { width: 15%; }  /* serial */
+.reset-events-table col:nth-child(3) { width: 15%; }  /* mac */
+.reset-events-table col:nth-child(4) { width: 15%; }  /* pppoe antes */
+.reset-events-table col:nth-child(5) { width: 15%; }  /* pppoe depois */
+.reset-events-table col:nth-child(6) { width: 20%; }  /* ações */
+
+/* Cabeçalho */
+.reset-events-table thead th {
+  background-color: #003366;
+  color: #fff;
+  padding: 12px;
+  border: 1px solid #003366;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Linhas */
+.reset-events-table tbody td {
+  border: 1px solid #003366;
+  padding: 12px;
+  text-align: center;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Célula de ações: botões empilhados */
+.reset-events-table td.actions-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: #e6ffe6;
+}
+
+/* Botões */
+.reset-events-table .device-config-button {
+  width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+}

@@ -1,0 +1,162 @@
+/* AdminCommon.css */
+
+.settings-container {
+  padding: 40px 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: #f4f4f4;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 8px;
+}
+
+.settings-container h2 {
+  text-align: center;
+  color: #003366;
+  margin-bottom: 30px;
+}
+
+/* container genérico de botões, sem impor tamanho */
+.button-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+/* botão comum, mas sem largura fixa */
+.btn-action {
+  background-color: #004990;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-action:hover {
+  background-color: #003366;
+}
+
+/* voltar genérico, sem largura fixa */
+.btn-back {
+  background-color: #004990;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-back:hover {
+  background-color: #003366;
+}
+
+.btn-back {
+  display: block;
+  text-align: center;
+  margin: 20px auto 0;
+  background-color: #004990;
+  color: #fff;
+  padding: 10px 14px;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.btn-back:hover {
+  background-color: #003366;
+}
+
+.message-success {
+  color: green;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.message-error {
+  color: red;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Modal genérico (reduzido) */
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px 30px;
+  border-radius: 6px;
+  width: 80%;        /* antes era 90% */
+  max-width: 320px;  /* antes era 380px */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  color: #003366;
+}
+
+.modal-content label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.modal-content input[type="number"],
+.modal-content input[type="text"],
+.modal-content select {
+  margin-top: 5px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.modal-buttons,
+.button-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-save {
+  padding: 8px 12px;
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-save:hover {
+  background-color: #218838;
+}
+
+.btn-cancel {
+  padding: 8px 12px;
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background-color: #c82333;
+}
+

@@ -1,0 +1,62 @@
+/* src/ManageRoles.css */
+
+/* 1. Container igual ao de ManageUsers (herda de AdminCommon) */
+.manage-roles-container {
+  padding: 40px 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: #f4f4f4;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+}
+
+/* 2. Botão “Novo Perfil” */
+.new-user-button {
+  padding: 12px;
+  background-color: #004990;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+.new-user-button:hover {
+  background-color: #003366;
+}
+
+/* 3. Reuso do estilo de tabela de ManageUsers */
+.manage-users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.manage-users-table th,
+.manage-users-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+.manage-users-table th {
+  background-color: #f4f4f4;
+}
+
+/* força quebra de linha após “Permissões:” */
+.modal-content form > div > strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* ==== Início da sobreposição para alinhar checkboxes no modal ==== */
+/* Garante que o label da checkbox fique na mesma linha e sem margem extra */
+.modal-content .checkbox-row label {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  font-weight: bold; /* opcional, para acompanhar o estilo dos rótulos */
+}
+
+/* Ajusta um pouco o espaçamento à direita da checkbox, se necessário */
+.modal-content .checkbox-row input[type="checkbox"] {
+  margin-right: 8px;
+}
+/* ==== Fim da sobreposição ==== */

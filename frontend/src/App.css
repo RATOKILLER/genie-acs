@@ -1,0 +1,295 @@
+/* src/App.css */
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap');
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  background-color: #f4f4f4;
+  color: #333;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-container {
+  width: auto;
+  margin: 20px auto;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  zoom: 0.75;
+}
+
+.dashboard-title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #003366;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 18px;
+}
+
+.dashboard-table thead tr {
+  background-color: #003366;
+  color: #ffffff;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  padding: 10px;
+  border: 1px solid #eaeaea;
+  white-space: nowrap;
+}
+
+/* Alinhamento das colunas específicas */
+.dashboard-table th:nth-child(1),
+.dashboard-table td:nth-child(1) { /* Fabricante */
+  text-align: left;
+  padding-left: 15px;
+  width: 15%;
+}
+
+.dashboard-table th:nth-child(2),
+.dashboard-table td:nth-child(2) { /* Modelo */
+  text-align: left;
+  padding-left: 15px;
+  width: 12%;
+}
+
+.dashboard-table th:nth-child(3),
+.dashboard-table td:nth-child(3) { /* Versão Software */
+  text-align: left;
+  padding-left: 15px;
+  width: 18%;
+}
+
+/* Modo massa */
+.dashboard-table th:nth-child(2),
+.dashboard-table td:nth-child(2) {
+  text-align: left;
+  padding-left: 15px;
+}
+
+/* Linhas principais */
+.dashboard-table > tbody > tr:not(.submenu) {
+  background-color: #e6ffe6;
+  font-weight: normal;
+  line-height: 1.2;
+}
+
+.dashboard-table > tbody > tr:not(.submenu):nth-child(even) {
+  background-color: #f0fff0;
+}
+
+/* Submenu */
+.dashboard-table > tbody > tr.submenu,
+.dashboard-table > tbody > tr.submenu:nth-child(even) {
+  background-color: #ff8d85 !important;
+  animation: fadeIn 0.3s;
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+.dashboard-table > tbody > tr.submenu td {
+  background-color: transparent !important;
+  padding: 8px 10px !important;
+}
+
+.dashboard-table tr.submenu td:nth-child(1) {
+  padding-left: 55px;
+}
+
+.manufacturer-cell {
+  white-space: nowrap;
+}
+
+.arrow {
+  margin-left: 5px;
+  color: red;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Botões de ação (Exibir Filtros, Atualizar Firmware, Detalhes etc.) */
+.device-config-button {
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  white-space: nowrap;      /* Impede quebra de texto */
+}
+
+.device-config-button:hover {
+  background-color: #003366;
+}
+
+.filters-container {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.filter-item select {
+  margin-top: 5px;
+  padding: 6px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 100%;
+}
+
+.search-box {
+  flex: 1;                  /* Ocupa o espaço restante */
+  min-width: 180px;         /* Largura mínima */
+  max-width: 300px;         /* Largura máxima */
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  max-width: 500px;
+  width: 100%;
+}
+
+@keyframes rotation {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rotate {
+  animation: rotation 1s linear infinite;
+}
+
+.firmware-select {
+  padding: 6px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  color: #333;
+  outline: none;
+  transition: border-color 0.3s ease;
+  min-width: 200px;
+}
+
+.firmware-select:hover {
+  border-color: #aaa;
+}
+
+.firmware-select:focus {
+  border-color: #007bff;
+}
+
+.firmware-model-row {
+  display: grid;
+  grid-template-columns: 120px auto;
+  gap: 10px 20px;
+  margin-bottom: 10px;
+}
+
+.status-indicator.online {
+  background-color: #31a354;
+}
+
+.status-indicator.offline {
+  background-color: #dc3545;
+}
+
+.status-indicator.alert {
+  background-color: #ffc107;
+}
+
+.page-size-container {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #004990;
+  border-radius: 4px;
+  /* mesmo padding vertical dos botões: */
+  padding: 8px 16px;
+  /* remove o deslocamento vertical: */
+  margin: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+
+.page-size-label {
+  font-size: 14px;
+  color: #003366;
+  margin: 0 8px;
+}
+
+.page-size-select {
+  margin-left: 4px;
+  padding: 6px 8px;
+}
+
+.page-size-select:hover,
+.page-size-select:focus {
+  border-color: #004990;
+  outline: none;
+}
+
+/* Container flex para todos os controles */
+.controls-container {
+  display: flex;
+  align-items: center;      /* Alinha tudo verticalmente ao centro */
+  gap: 12px;                /* Espaçamento uniforme entre cada controle */
+  flex-wrap: wrap;          /* Se o espaço ficar curto, quebra em linha nova */
+  margin-bottom: 16px;      /* Um respiro embaixo, antes da tabela */
+}
+
+.total-count {
+  margin-left: auto;        /* "Empurra" para a direita */
+  font-weight: 600;
+  color: #333;
+}
+
+
+/* App.css */
+.pagination .device-config-button[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.pagination .device-config-button {
+  min-width: 36px;
+  padding: 6px 10px;
+}

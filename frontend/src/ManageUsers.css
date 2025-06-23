@@ -1,0 +1,52 @@
+/* src/ManageUsers.css */
+
+.manage-users-table {
+  width: auto;        /* largura se ajusta ao conteúdo */
+  margin: 0 auto;
+  table-layout: auto;
+}
+
+.manage-users-table th,
+.manage-users-table td {
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+}
+
+.manage-users-table th {
+  background-color: #f4f4f4;
+}
+
+/* coluna de ações */
+.manage-users-table th.actions-header,
+.manage-users-table td.actions-cell {
+  width: 280px;
+  white-space: nowrap;
+}
+
+.manage-users-table td.actions-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.manage-users-table td.actions-cell button {
+  flex: 1;
+  max-width: 80px;
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+}
+
+/* Use a versão mais específica que sugeri anteriormente */
+.modal-content form .checkbox-label {
+  display: flex;
+  flex-direction: row; /* <-- Adicione esta linha */
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 1em 0;
+}
+
+.checkbox-label input {
+  margin: 0;
+}

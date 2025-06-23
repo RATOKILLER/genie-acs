@@ -1,0 +1,23 @@
+/* src/AdminPage.css */
+
+/* Centraliza os botões e limita largura */
+.settings-container {
+  max-width: 800px;  /* largura maior só p/ essa página */
+  margin: 40px auto;
+}
+
+/* Botões .btn-action nesta página */
+.button-stack .btn-action {
+  padding: 8px 12px;
+  font-size: 14px;
+  width: 240px;
+}
+
+/* Botão de voltar centralizado e do mesmo tamanho */
+.btn-back {
+  display: block;
+  margin: 20px auto 0;
+  padding: 8px 12px;
+  font-size: 14px;
+  width: 240px;
+}
