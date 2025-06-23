@@ -1,0 +1,480 @@
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const axios = require("axios");
+
+const app = express();
+const PORT = 5000;
+
+app.use(cors());
+app.use(express.json());
+
+// Conectar ao MongoDB
+mongoose
+  .connect("mongodb://127.0.0.1:27017/genieacs", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB conectado"))
+  .catch((err) => console.error("Erro ao conectar ao MongoDB:", err));
+
+// Modelo de dispositivo
+const Device = mongoose.model("devices", new mongoose.Schema({}, { strict: false }));
+
+// Variável global para armazenar dispositivos formatados
+let lastFormattedDevices = [];
+
+/**
+ * GET /devices
+ * Retorna a lista de dispositivos formatados (incluindo UpTime, PPPoE, Wi-Fi, e hosts LAN).
+ */
+app.get("/devices", async (req, res) => {
+  try {
+    // Modelos de roteadores Mercusys
+    const mercusysModels = ["MR30G", "MR60X", "MR50G", "AC12G"];
+
+    // Projeção específica (sem "InternetGatewayDevice.LANDevice": 1 para evitar colisão)
+    const devices = await Device.find({}, {
+      "_id": 1,
+      "_deviceId._SerialNumber": 1,
+      "_deviceId._Manufacturer": 1,
+      "_deviceId._ProductClass": 1,
+      "_deviceId._OUI": 1,
+
+      // Info do Device
+      "InternetGatewayDevice.DeviceInfo.SerialNumber": 1,
+      "InternetGatewayDevice.DeviceInfo.Manufacturer": 1,
+      "InternetGatewayDevice.DeviceInfo.ModelName": 1,
+      "InternetGatewayDevice.DeviceInfo.ProductClass": 1,
+      "InternetGatewayDevice.DeviceInfo.SoftwareVersion": 1,
+      "InternetGatewayDevice.DeviceInfo.UpTime": 1,
+
+      // IP PPPoE / IPoE
+      "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress": 1,
+      "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANIPConnection.1.ExternalIPAddress": 1,
+
+      // PPPoE Username/Password
+      "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username": 1,
+      "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password": 1,
+
+      // MultiAP
+      "InternetGatewayDevice.WiFi.MultiAP.APDevice": 1,
+
+      // LAN: Hosts e WLANConfiguration (sem colisão)
+      "InternetGatewayDevice.LANDevice.1.Hosts": 1,
+      "InternetGatewayDevice.LANDevice.1.WLANConfiguration": 1,
+
+      // ConnectionRequest
+      "InternetGatewayDevice.ManagementServer.ConnectionRequestUsername": 1,
+    });
+
+    // Map para lookup rápido
+    let deviceMap = new Map();
+    devices.forEach((d) => {
+      const s = d.InternetGatewayDevice?.DeviceInfo?.SerialNumber?._value ||
+                d._deviceId?._SerialNumber || "N/A";
+      deviceMap.set(s, d);
+    });
+
+    let secondaryDevices = new Map();
+    let formattedDevices = [];
+
+    devices.forEach((device) => {
+      // Monta deviceId = OUI-ProductClass-SerialNumber
+      const oui = device._deviceId?._OUI || "N/A";
+      const productClass = device._deviceId?._ProductClass || "N/A";
+      const sn = device._deviceId?._SerialNumber || "N/A";
+      const deviceId = `${oui}-${productClass}-${sn}`;
+
+      // Serial
+      const serial = device.InternetGatewayDevice?.DeviceInfo?.SerialNumber?._value ||
+                     device._deviceId?._SerialNumber || "N/A";
+
+      const manufacturer = device.InternetGatewayDevice?.DeviceInfo?.Manufacturer?._value ||
+                           device._deviceId?._Manufacturer || "N/A";
+      const model = device.InternetGatewayDevice?.DeviceInfo?.ModelName?._value ||
+                    device.InternetGatewayDevice?.DeviceInfo?.ProductClass?._value ||
+                    device._deviceId?._ProductClass || "N/A";
+      const softwareVersion =
+        device.InternetGatewayDevice?.DeviceInfo?.SoftwareVersion?._value || "N/A";
+
+      // UpTime
+      const deviceUpTime =
+        device.InternetGatewayDevice?.DeviceInfo?.UpTime?._value || 0;
+
+      // IP
+      let externalIP = "N/A";
+      if (manufacturer === "FiberHome") {
+        externalIP =
+          device.InternetGatewayDevice?.WANDevice?.["1"]?.WANConnectionDevice?.["1"]?.WANPPPConnection?.["1"]?.ExternalIPAddress?._value ||
+          device.InternetGatewayDevice?.WANDevice?.["1"]?.WANConnectionDevice?.["1"]?.WANIPConnection?.["1"]?.ExternalIPAddress?._value ||
+          "N/A";
+      } else {
+        externalIP =
+          device.InternetGatewayDevice?.WANDevice?.["1"]?.WANConnectionDevice?.["1"]?.WANPPPConnection?.["1"]?.ExternalIPAddress?._value ||
+          "N/A";
+      }
+
+      // PPPoE
+      const pppoeUsername =
+        device.InternetGatewayDevice?.WANDevice?.["1"]?.WANConnectionDevice?.["1"]?.WANPPPConnection?.["1"]?.Username?._value || "";
+      const pppoePassword =
+        device.InternetGatewayDevice?.WANDevice?.["1"]?.WANConnectionDevice?.["1"]?.WANPPPConnection?.["1"]?.Password?._value || "";
+
+      const connectionRequestUsername =
+        device.InternetGatewayDevice?.ManagementServer?.ConnectionRequestUsername?._value || "";
+
+      // Wi-Fi
+      let wifiNetworks = [];
+      const wlanConfig = device.InternetGatewayDevice?.LANDevice?.["1"]?.WLANConfiguration;
+      if (wlanConfig) {
+        Object.entries(wlanConfig).forEach(([index, wc]) => {
+          const ssid = wc.SSID?._value || "";
+          const passphrase = wc.KeyPassphrase?._value || "";
+          const enableRaw = wc.Enable?._value;
+          const enable = (enableRaw === "1" || enableRaw === "true" || enableRaw === true);
+          wifiNetworks.push({
+            index,
+            ssid,
+            passphrase,
+            enable
+          });
+        });
+      }
+
+      // Detecta MESH
+      let meshStatus = "";
+      let principalSerial = null;
+
+      // === 1) ONU FiberHome + MultiAP => MESH
+      if (
+        manufacturer === "FiberHome" &&
+        device.InternetGatewayDevice?.WiFi?.MultiAP?.APDevice
+      ) {
+        Object.values(device.InternetGatewayDevice.WiFi.MultiAP.APDevice).forEach((ap) => {
+          if (
+            ap.MACAddress?._value &&
+            ap.Manufacturer?._value === "MERCUSYS" &&
+            mercusysModels.includes(ap.ProductClass?._value.toUpperCase())
+          ) {
+            let extractedSerial = ap.MACAddress._value.replace(/:/g, "").toUpperCase();
+            if (!secondaryDevices.has(extractedSerial)) {
+              secondaryDevices.set(extractedSerial, serial);
+              formattedDevices.push({
+                deviceId: null,
+                serial: extractedSerial,
+                manufacturer: "MERCUSYS",
+                model: ap.ProductClass?._value || "N/A",
+                softwareVersion: "N/A",
+                externalIP: "N/A",
+                meshStatus: `Em Mesh com: ${serial}`,
+                principalSerial: serial,
+                pppoeUsername: "",
+                pppoePassword: "",
+                deviceUpTime: 0,
+                wifiNetworks: []
+              });
+            }
+            meshStatus = "MESH";
+            principalSerial = serial;
+          }
+        });
+      }
+
+      // === 2) ONU FiberHome + LAN => PRINCIPAL (mesmo em IPoE)
+      // Checa se "Hosts" existe
+      if (
+        manufacturer === "FiberHome" &&
+        device.InternetGatewayDevice?.LANDevice?.["1"]?.Hosts?.Host
+      ) {
+        Object.values(device.InternetGatewayDevice.LANDevice["1"].Hosts.Host).forEach((host) => {
+          const hostName = host.HostName?._value?.toUpperCase() || "";
+          if (mercusysModels.includes(hostName)) {
+            let extractedSerial = host.MACAddress?._value?.replace(/:/g, "").toUpperCase();
+            if (extractedSerial && !secondaryDevices.has(extractedSerial)) {
+              secondaryDevices.set(extractedSerial, serial);
+              formattedDevices.push({
+                deviceId: null,
+                serial: extractedSerial,
+                manufacturer: "MERCUSYS",
+                model: host.HostName?._value || "N/A",
+                softwareVersion: "N/A",
+                externalIP: "N/A",
+                meshStatus: `Conectado via LAN em: ${serial}`,
+                principalSerial: serial,
+                pppoeUsername: "",
+                pppoePassword: "",
+                deviceUpTime: 0,
+                wifiNetworks: []
+              });
+            }
+            if (!meshStatus) {
+              meshStatus = "PRINCIPAL";
+              principalSerial = serial;
+            }
+          }
+        });
+      }
+
+      // === 3) Dois roteadores Mercusys em Mesh (para dispositivos não-FiberHome)
+      if (manufacturer !== "FiberHome" && externalIP === "N/A" && connectionRequestUsername) {
+        let splitted = connectionRequestUsername.split("-");
+        let extractedSerial = splitted[splitted.length - 1] || "";
+        if (!deviceMap.has(extractedSerial)) {
+          extractedSerial = connectionRequestUsername;
+        }
+        if (deviceMap.has(extractedSerial)) {
+          meshStatus = `Em Mesh com: ${extractedSerial}`;
+          principalSerial = extractedSerial;
+          secondaryDevices.set(serial, principalSerial);
+        }
+      }
+
+      // === 4) Se nada definido e for FiberHome => PRINCIPAL
+      if (!meshStatus && manufacturer === "FiberHome") {
+        meshStatus = "PRINCIPAL";
+        principalSerial = serial;
+      }
+      // === 5) Se for roteador (não FiberHome) e tem IP => PRINCIPAL
+      else if (!meshStatus && manufacturer !== "FiberHome") {
+        if (externalIP !== "N/A") {
+          meshStatus = "PRINCIPAL";
+          principalSerial = serial;
+        } else {
+          meshStatus = "Em Mesh com: ???";
+          principalSerial = "???";
+        }
+      }
+
+      formattedDevices.push({
+        deviceId,
+        serial,
+        manufacturer,
+        model,
+        softwareVersion,
+        externalIP,
+        meshStatus,
+        principalSerial,
+        pppoeUsername,
+        pppoePassword,
+        deviceUpTime,
+        wifiNetworks
+      });
+    });
+
+    // 6) Se for secundário mas tiver IP => vira principal
+    formattedDevices.forEach((dev) => {
+      if ([...secondaryDevices.values()].includes(dev.serial) && dev.externalIP !== "N/A") {
+        dev.meshStatus = "PRINCIPAL";
+        dev.principalSerial = dev.serial;
+      }
+    });
+
+    // 7) Se um PRINCIPAL tiver secundários "Em Mesh", vira MESH
+    formattedDevices.forEach((dev) => {
+      if (dev.meshStatus === "PRINCIPAL") {
+        const hasMeshChild = formattedDevices.some(
+          (child) => child.meshStatus === `Em Mesh com: ${dev.serial}`
+        );
+        if (hasMeshChild) {
+          dev.meshStatus = "MESH";
+        }
+      }
+    });
+
+    // 8) Se está como "PRINCIPAL" mas não tem nenhum secundário, limpa o status
+    formattedDevices.forEach((dev) => {
+      if (dev.meshStatus === "PRINCIPAL") {
+        const hasChild = formattedDevices.some(
+          (child) =>
+            child.principalSerial === dev.serial &&
+            (child.meshStatus.startsWith("Em Mesh com") ||
+             child.meshStatus.startsWith("Conectado via LAN"))
+        );
+        if (!hasChild) {
+          dev.meshStatus = "";
+        }
+      }
+    });
+
+    // Salva
+    lastFormattedDevices = formattedDevices;
+    res.json(formattedDevices);
+
+  } catch (error) {
+    console.error("Erro ao buscar dispositivos:", error);
+    res.status(500).json({ error: "Erro interno no servidor" });
+  }
+});
+
+/**
+ * GET /devices/serial/:serial
+ * Retorna detalhes de um dispositivo
+ */
+app.get("/devices/serial/:serial", (req, res) => {
+  const { serial } = req.params;
+  const found = lastFormattedDevices.find((d) => d.serial === serial);
+  if (!found) {
+    return res.status(404).json({ error: "Dispositivo não encontrado" });
+  }
+  res.json(found);
+});
+
+/**
+ * POST /devices/serial/:serial/setPppoe
+ * Insere tarefa de setParameterValues p/ PPPoE
+ */
+app.post("/devices/serial/:serial/setPppoe", async (req, res) => {
+  try {
+    const { serial } = req.params;
+    const { user, pass } = req.body;
+    const found = lastFormattedDevices.find((d) => d.serial === serial);
+    if (!found) {
+      return res.status(404).json({ success: false, error: "Dispositivo não encontrado" });
+    }
+    if (!found.deviceId) {
+      return res.status(400).json({ success: false, error: "Dispositivo secundário, sem config." });
+    }
+    const tasksCollection = mongoose.connection.db.collection("tasks");
+    let parameterValues = [];
+    if (user && user.trim() !== "") {
+      parameterValues.push([
+        "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username",
+        user
+      ]);
+    }
+    if (pass && pass.trim() !== "") {
+      parameterValues.push([
+        "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Password",
+        pass
+      ]);
+    }
+    if (parameterValues.length === 0) {
+      return res.status(400).json({ success: false, error: "Nenhum parâmetro para atualizar" });
+    }
+    const newTask = {
+      name: "setParameterValues",
+      device: found.deviceId,
+      parameterValues,
+      created: new Date(),
+      expiry: new Date(Date.now() + 60 * 60 * 1000)
+    };
+    const result = await tasksCollection.insertOne(newTask);
+    return res.json({
+      success: true,
+      message: "Tarefa de configuração PPPoE inserida com sucesso!",
+      taskId: result.insertedId
+    });
+  } catch (error) {
+    console.error("Erro ao inserir tarefa setParameterValues:", error);
+    return res.status(500).json({ success: false, error: "Falha ao inserir setParameterValues" });
+  }
+});
+
+/**
+ * POST /devices/serial/:serial/reboot
+ * Tarefa de reboot
+ */
+app.post("/devices/serial/:serial/reboot", async (req, res) => {
+  try {
+    const { serial } = req.params;
+    const found = lastFormattedDevices.find((d) => d.serial === serial);
+    if (!found) {
+      return res.status(404).json({ success: false, error: "Dispositivo não encontrado" });
+    }
+    if (!found.deviceId) {
+      return res.status(400).json({ success: false, error: "Dispositivo secundário, sem reboot." });
+    }
+    const tasksCollection = mongoose.connection.db.collection("tasks");
+    const newTask = {
+      name: "reboot",
+      device: found.deviceId,
+      created: new Date(),
+      expiry: new Date(Date.now() + 60 * 60 * 1000)
+    };
+    const result = await tasksCollection.insertOne(newTask);
+    return res.json({
+      success: true,
+      message: "Comando de reboot inserido com sucesso!",
+      taskId: result.insertedId
+    });
+  } catch (error) {
+    console.error("Erro ao inserir tarefa de reboot:", error);
+    return res.status(500).json({ success: false, error: "Falha ao inserir reboot" });
+  }
+});
+
+/**
+ * POST /devices/serial/:serial/setWifi
+ * Exemplo de script p/ configurar SSID/senha sem mexer no Enable
+ */
+app.post("/devices/serial/:serial/setWifi", async (req, res) => {
+  try {
+    const { serial } = req.params;
+    const { index, ssid, passphrase } = req.body;
+
+    const found = lastFormattedDevices.find((d) => d.serial === serial);
+    if (!found) {
+      return res.status(404).json({ success: false, error: "Dispositivo não encontrado" });
+    }
+    if (!found.deviceId) {
+      return res.status(400).json({ success: false, error: "Dispositivo secundário, sem config." });
+    }
+    if (!index) {
+      return res.status(400).json({ success: false, error: "Falta o índice da WLANConfiguration" });
+    }
+    const tasksCollection = mongoose.connection.db.collection("tasks");
+    let parameterValues = [];
+    if (ssid && ssid.trim() !== "") {
+      parameterValues.push([
+        `InternetGatewayDevice.LANDevice.1.WLANConfiguration.${index}.SSID`,
+        ssid
+      ]);
+    }
+    if (passphrase && passphrase.trim() !== "") {
+      parameterValues.push([
+        `InternetGatewayDevice.LANDevice.1.WLANConfiguration.${index}.KeyPassphrase`,
+        passphrase
+      ]);
+    }
+    if (parameterValues.length === 0) {
+      return res.status(400).json({ success: false, error: "Nenhum parâmetro para atualizar" });
+    }
+    const newTask = {
+      name: "setParameterValues",
+      device: found.deviceId,
+      parameterValues,
+      created: new Date(),
+      expiry: new Date(Date.now() + 60 * 60 * 1000)
+    };
+    const result = await tasksCollection.insertOne(newTask);
+    return res.json({
+      success: true,
+      message: "Tarefa de configuração Wi-Fi inserida com sucesso!",
+      taskId: result.insertedId
+    });
+  } catch (error) {
+    console.error("Erro ao inserir tarefa setWifi:", error);
+    return res.status(500).json({ success: false, error: "Falha ao inserir tarefa setWifi" });
+  }
+});
+
+/**
+ * Exemplo de endpoint p/ remover tasks expiradas
+ * (Opcional)
+ */
+app.delete("/tasks/cleanup", async (req, res) => {
+  try {
+    const tasksCollection = mongoose.connection.db.collection("tasks");
+    const now = new Date();
+    const result = await tasksCollection.deleteMany({ expiry: { $lte: now } });
+    res.json({ success: true, removed: result.deletedCount });
+  } catch (error) {
+    console.error("Erro ao limpar tasks:", error);
+    res.status(500).json({ success: false, error: "Falha ao limpar tasks" });
+  }
+});
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
